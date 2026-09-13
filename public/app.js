@@ -6,12 +6,17 @@ const state = {
   user: JSON.parse(sessionStorage.getItem('vq_admin_user') || 'null'),
   campaigns: [],
   selectedCampaignId: null,
-  selectedQr: null
+  selectedQr: null,
+  screen: 'dashboard'
 };
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, (char) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
   }[char]));
 }
 
@@ -19,9 +24,11 @@ async function api(url, options = {}) {
   const headers = { ...(options.headers || {}) };
   if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
   if (state.token) headers.Authorization = `Bearer ${state.token}`;
+
   const response = await fetch(url, { ...options, headers });
   const isJson = (response.headers.get('content-type') || '').includes('application/json');
   const body = isJson ? await response.json() : await response.text();
+
   if (!response.ok) {
     if (response.status === 401 && state.token) logout(false);
     throw new Error(body?.error || body || `Request failed (${response.status})`);
@@ -41,7 +48,9 @@ function toast(message, type = 'ok') {
 function showLoggedIn() {
   $('#loginView').classList.add('hidden');
   $('#appView').classList.remove('hidden');
+  $('#adminName').textContent = state.user?.display_name || '';
   $('#adminEmail').textContent = state.user?.email || '';
+  $('#usersNav').classList.toggle('hidden', state.user?.role !== 'admin');
   loadAll();
 }
 
@@ -66,48 +75,67 @@ async function loadAll() {
       api('/api/admin/overview'),
       api('/api/admin/campaigns')
     ]);
+
     state.campaigns = campaignData.campaigns || [];
     $('#statCampaigns').textContent = overview.campaigns;
     $('#statTotal').textContent = overview.vouchers_total;
     $('#statAvailable').textContent = overview.vouchers_available;
     $('#statAssigned').textContent = overview.vouchers_assigned;
+
     renderCampaignCards();
     renderCampaignList();
+
     if (state.selectedCampaignId) {
       const exists = state.campaigns.some((item) => item.id === state.selectedCampaignId);
       if (exists) await openCampaign(state.selectedCampaignId, false);
+    }
+
+    if (state.screen === 'users' && state.user?.role === 'admin') {
+      await loadUsers();
     }
   } catch (error) {
     toast(error.message, 'error');
   }
 }
 
+function ownerLine(campaign) {
+  if (state.user?.role !== 'admin' || !campaign.owner_email) return '';
+  return `<div class="muted small-text">Owner: ${escapeHtml(campaign.owner_name || campaign.owner_email)}</div>`;
+}
+
 function renderCampaignCards() {
   const root = $('#campaignCards');
   const empty = $('#emptyCampaigns');
+
   if (!state.campaigns.length) {
     root.innerHTML = '';
     empty.classList.remove('hidden');
     return;
   }
+
   empty.classList.add('hidden');
-  root.innerHTML = state.campaigns.slice(0, 6).map((c) => `
-    <article class="campaign-card" data-campaign-card="${c.id}">
+  root.innerHTML = state.campaigns.slice(0, 6).map((campaign) => `
+    <article class="campaign-card" data-campaign-card="${campaign.id}">
       <div class="section-head">
-        <h4>${escapeHtml(c.name)}</h4>
-        <span class="pill ${c.status === 'paused' ? 'paused' : ''}">${escapeHtml(c.status)}</span>
+        <h4>${escapeHtml(campaign.name)}</h4>
+        <span class="pill ${campaign.status === 'paused' ? 'paused' : ''}">${escapeHtml(campaign.status)}</span>
       </div>
-      <div class="muted small-text">${escapeHtml(c.hotspot_login_url)}</div>
+      <div class="muted small-text">${escapeHtml(campaign.hotspot_login_url)}</div>
+      ${ownerLine(campaign)}
       <div class="metric-row">
-        <div class="mini-metric"><strong>${c.available}</strong><span>Available</span></div>
-        <div class="mini-metric"><strong>${c.assigned}</strong><span>Assigned</span></div>
-        <div class="mini-metric"><strong>${c.total}</strong><span>Total</span></div>
+        <div class="mini-metric"><strong>${campaign.available}</strong><span>Available</span></div>
+        <div class="mini-metric"><strong>${campaign.assigned}</strong><span>Assigned</span></div>
+        <div class="mini-metric"><strong>${campaign.total}</strong><span>Total</span></div>
       </div>
-    </article>`).join('');
-  $$('[data-campaign-card]').forEach((card) => card.addEventListener('click', () => {
-    switchScreen('campaigns');
-    openCampaign(Number(card.dataset.campaignCard));
-  }));
+    </article>
+  `).join('');
+
+  $$('[data-campaign-card]').forEach((card) => {
+    card.addEventListener('click', () => {
+      switchScreen('campaigns');
+      openCampaign(Number(card.dataset.campaignCard));
+    });
+  });
 }
 
 function renderCampaignList() {
@@ -116,31 +144,45 @@ function renderCampaignList() {
     root.innerHTML = '<div class="empty-state"><span>No QR campaigns yet.</span></div>';
     return;
   }
-  root.innerHTML = state.campaigns.map((c) => `
-    <button data-campaign-list="${c.id}" class="${state.selectedCampaignId === c.id ? 'active' : ''}">
-      <strong>${escapeHtml(c.name)}</strong>
-      <span>${c.available} available · ${c.assigned} assigned</span>
-    </button>`).join('');
-  $$('[data-campaign-list]').forEach((button) => button.addEventListener('click', () => openCampaign(Number(button.dataset.campaignList))));
+
+  root.innerHTML = state.campaigns.map((campaign) => `
+    <button data-campaign-list="${campaign.id}" class="${state.selectedCampaignId === campaign.id ? 'active' : ''}">
+      <strong>${escapeHtml(campaign.name)}</strong>
+      <span>${campaign.available} available · ${campaign.assigned} assigned</span>
+    </button>
+  `).join('');
+
+  $$('[data-campaign-list]').forEach((button) => {
+    button.addEventListener('click', () => openCampaign(Number(button.dataset.campaignList)));
+  });
 }
 
 async function openCampaign(id, refreshList = true) {
   state.selectedCampaignId = id;
   if (refreshList) renderCampaignList();
+
   const campaign = state.campaigns.find((item) => item.id === id);
   if (!campaign) return;
+
   const detail = $('#campaignDetail');
   detail.innerHTML = '<div class="empty-state"><strong>Loading campaign…</strong></div>';
+
   try {
     const [voucherData, qrData] = await Promise.all([
       api(`/api/admin/campaigns/${id}/vouchers`),
       api(`/api/admin/campaigns/${id}/qr`, { method: 'POST' })
     ]);
+
     state.selectedQr = qrData;
     const vouchers = voucherData.vouchers || [];
+
     detail.innerHTML = `
       <div class="section-head">
-        <div><div class="eyebrow">${escapeHtml(campaign.status)}</div><h3>${escapeHtml(campaign.name)}</h3></div>
+        <div>
+          <div class="eyebrow">${escapeHtml(campaign.status)}</div>
+          <h3>${escapeHtml(campaign.name)}</h3>
+          ${ownerLine(campaign)}
+        </div>
         <button id="reloadVoucherBtn" class="btn primary">+ Reload vouchers</button>
       </div>
       <div class="detail-grid">
@@ -162,17 +204,22 @@ async function openCampaign(id, refreshList = true) {
           <div class="voucher-table-wrap">
             <table>
               <thead><tr><th>Voucher</th><th>Status</th><th>Device</th><th>Assigned</th></tr></thead>
-              <tbody>${vouchers.length ? vouchers.map((v) => `
-                <tr>
-                  <td class="code">${escapeHtml(v.code)}</td>
-                  <td><span class="status-dot ${v.status === 'assigned' ? 'assigned' : ''}"></span>${escapeHtml(v.status)}</td>
-                  <td>${escapeHtml(v.assigned_device_key || '—')}</td>
-                  <td>${escapeHtml(v.assigned_at ? new Date(v.assigned_at).toLocaleString() : '—')}</td>
-                </tr>`).join('') : '<tr><td colspan="4" class="muted">No vouchers loaded yet.</td></tr>'}</tbody>
+              <tbody>
+                ${vouchers.length ? vouchers.map((voucher) => `
+                  <tr>
+                    <td class="code">${escapeHtml(voucher.code)}</td>
+                    <td><span class="status-dot ${voucher.status === 'assigned' ? 'assigned' : ''}"></span>${escapeHtml(voucher.status)}</td>
+                    <td>${escapeHtml(voucher.assigned_device_key || '—')}</td>
+                    <td>${escapeHtml(voucher.assigned_at ? new Date(voucher.assigned_at).toLocaleString() : '—')}</td>
+                  </tr>
+                `).join('') : '<tr><td colspan="4" class="muted">No vouchers loaded yet.</td></tr>'}
+              </tbody>
             </table>
           </div>
         </div>
-      </div>`;
+      </div>
+    `;
+
     $('#reloadVoucherBtn').addEventListener('click', () => $('#voucherDialog').showModal());
     $('#downloadQrBtn').addEventListener('click', downloadQr);
     $('#copyQrBtn').addEventListener('click', async () => {
@@ -180,7 +227,12 @@ async function openCampaign(id, refreshList = true) {
       toast('QR link copied');
     });
   } catch (error) {
-    detail.innerHTML = `<div class="empty-state"><strong>Unable to load campaign</strong><span>${escapeHtml(error.message)}</span></div>`;
+    detail.innerHTML = `
+      <div class="empty-state">
+        <strong>Unable to load campaign</strong>
+        <span>${escapeHtml(error.message)}</span>
+      </div>
+    `;
   }
 }
 
@@ -198,12 +250,39 @@ function downloadQr() {
   URL.revokeObjectURL(url);
 }
 
+async function loadUsers() {
+  if (state.user?.role !== 'admin') return;
+  try {
+    const result = await api('/api/admin/users');
+    const users = result.users || [];
+    $('#usersTable').innerHTML = users.length ? users.map((user) => `
+      <tr>
+        <td>${escapeHtml(user.display_name)}</td>
+        <td>${escapeHtml(user.email)}</td>
+        <td>${escapeHtml(user.role)}</td>
+        <td>${escapeHtml(new Date(user.created_at).toLocaleString())}</td>
+      </tr>
+    `).join('') : '<tr><td colspan="4" class="muted">No users yet.</td></tr>';
+  } catch (error) {
+    toast(error.message, 'error');
+  }
+}
+
 function switchScreen(screen) {
-  const dashboard = screen === 'dashboard';
-  $('#dashboardScreen').classList.toggle('hidden', !dashboard);
-  $('#campaignsScreen').classList.toggle('hidden', dashboard);
-  $('#pageTitle').textContent = dashboard ? 'Overview' : 'QR Campaigns';
-  $$('.nav-item').forEach((item) => item.classList.toggle('active', item.dataset.screen === screen));
+  if (screen === 'users' && state.user?.role !== 'admin') screen = 'dashboard';
+  state.screen = screen;
+
+  $('#dashboardScreen').classList.toggle('hidden', screen !== 'dashboard');
+  $('#campaignsScreen').classList.toggle('hidden', screen !== 'campaigns');
+  $('#usersScreen').classList.toggle('hidden', screen !== 'users');
+  $('#pageTitle').textContent = screen === 'dashboard' ? 'Overview' : screen === 'campaigns' ? 'QR Campaigns' : 'Portal Users';
+  $('#newCampaignBtn').classList.toggle('hidden', screen === 'users');
+
+  $$('.nav-item').forEach((item) => {
+    item.classList.toggle('active', item.dataset.screen === screen);
+  });
+
+  if (screen === 'users') loadUsers();
 }
 
 function parseVoucherText(text) {
@@ -226,7 +305,10 @@ $('#loginForm').addEventListener('submit', async (event) => {
   try {
     const result = await api('/api/admin/login', {
       method: 'POST',
-      body: JSON.stringify({ email: $('#loginEmail').value, password: $('#loginPassword').value })
+      body: JSON.stringify({
+        email: $('#loginEmail').value,
+        password: $('#loginPassword').value
+      })
     });
     state.token = result.token;
     state.user = result.user;
@@ -244,7 +326,10 @@ $('#campaignForm').addEventListener('submit', async (event) => {
   try {
     const result = await api('/api/admin/campaigns', {
       method: 'POST',
-      body: JSON.stringify({ name: $('#campaignName').value, hotspot_login_url: $('#hotspotUrl').value })
+      body: JSON.stringify({
+        name: $('#campaignName').value,
+        hotspot_login_url: $('#hotspotUrl').value
+      })
     });
     $('#campaignDialog').close();
     $('#campaignForm').reset();
@@ -261,16 +346,19 @@ $('#voucherForm').addEventListener('submit', async (event) => {
   event.preventDefault();
   $('#voucherError').textContent = '';
   if (!state.selectedCampaignId) return;
+
   try {
     let text = $('#voucherText').value;
     const file = $('#voucherFile').files?.[0];
     if (file) text += `\n${await file.text()}`;
     const vouchers = parseVoucherText(text);
     if (!vouchers.length) throw new Error('Paste vouchers or choose a TXT/CSV file.');
+
     const result = await api(`/api/admin/campaigns/${state.selectedCampaignId}/vouchers`, {
       method: 'POST',
       body: JSON.stringify({ vouchers })
     });
+
     $('#voucherDialog').close();
     $('#voucherForm').reset();
     await loadAll();
@@ -278,6 +366,27 @@ $('#voucherForm').addEventListener('submit', async (event) => {
     toast(`${result.added} vouchers added${result.skipped ? ` · ${result.skipped} duplicates skipped` : ''}`);
   } catch (error) {
     $('#voucherError').textContent = error.message;
+  }
+});
+
+$('#userForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  $('#userError').textContent = '';
+  try {
+    await api('/api/admin/users', {
+      method: 'POST',
+      body: JSON.stringify({
+        display_name: $('#userName').value,
+        email: $('#userEmail').value,
+        password: $('#userPassword').value,
+        role: $('#userRole').value
+      })
+    });
+    $('#userForm').reset();
+    await loadUsers();
+    toast('Portal user created');
+  } catch (error) {
+    $('#userError').textContent = error.message;
   }
 });
 
