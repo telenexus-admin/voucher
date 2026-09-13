@@ -1,0 +1,26 @@
+<%- include('partials/head', { title: 'Dashboard' }) %>
+<%- include('partials/nav') %>
+<main class="page">
+  <div class="page-head"><div><p class="eyebrow">CONTROL CENTER</p><h1>Hotspot QR campaigns</h1><p class="muted">Reload vouchers without reprinting the QR.</p></div><a class="btn primary" href="/campaigns/new">+ New hotspot</a></div>
+  <section class="stats-grid">
+    <div class="stat"><span>Hotspots</span><strong><%= number(summary.campaigns) %></strong></div>
+    <div class="stat"><span>Total vouchers</span><strong><%= number(summary.total) %></strong></div>
+    <div class="stat"><span>Available</span><strong><%= number(summary.available) %></strong></div>
+    <div class="stat"><span>Assigned</span><strong><%= number(summary.assigned) %></strong></div>
+  </section>
+  <section class="panel">
+    <div class="panel-head"><h2>Your hotspots</h2></div>
+    <% if (!campaigns.length) { %><div class="empty"><h3>No hotspot campaigns yet</h3><p>Create one, upload vouchers, then print its QR.</p></div><% } %>
+    <div class="campaign-grid">
+      <% campaigns.forEach(c => { %>
+      <a class="campaign-card" href="/campaigns/<%= c.id %>">
+        <div class="row between"><span class="status <%= c.status %>"><%= c.status %></span><span class="tiny"><%= c.hotspot_host %></span></div>
+        <h3><%= c.name %></h3>
+        <div class="mini-stats"><span><b><%= number(c.available) %></b> available</span><span><b><%= number(c.assigned) %></b> assigned</span><span><b><%= number(c.total) %></b> total</span></div>
+        <% if (currentUser.role === 'admin') { %><p class="tiny">Owner: <%= c.owner_name %></p><% } %>
+      </a>
+      <% }) %>
+    </div>
+  </section>
+</main>
+</body></html>

@@ -1,0 +1,9 @@
+<%- include('partials/head', { title: 'Users' }) %>
+<%- include('partials/nav') %>
+<main class="page">
+  <div class="page-head"><div><p class="eyebrow">ACCESS</p><h1>Portal users</h1><p class="muted">Create operator accounts for people who need to load and manage their own hotspot QR pools.</p></div></div>
+  <div class="two-col">
+    <section class="panel form-panel"><h2>Add user</h2><% if (error) { %><div class="alert danger"><%= error %></div><% } %><form method="post" action="/users" class="stack"><input type="hidden" name="_csrf" value="<%= csrf %>"><label>Name<input name="display_name" required></label><label>Email<input type="email" name="email" required></label><label>Temporary password<input type="password" name="password" minlength="10" required></label><label>Role<select name="role"><option value="operator">Operator</option><option value="admin">Administrator</option></select></label><button class="btn primary">Create user</button></form></section>
+    <section class="panel"><h2>Existing users</h2><div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead><tbody><% users.forEach(u => { %><tr><td><%= u.display_name %></td><td><%= u.email %></td><td><span class="status"><%= u.role %></span></td></tr><% }) %></tbody></table></div></section>
+  </div>
+</main></body></html>

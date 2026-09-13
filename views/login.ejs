@@ -1,0 +1,16 @@
+<%- include('partials/head', { title: 'Sign in' }) %>
+<main class="auth-shell">
+  <section class="auth-card">
+    <div class="brand hero"><span class="brand-mark">V</span><span>Voucher QR</span></div>
+    <p class="eyebrow">HOTSPOT ACCESS DISTRIBUTION</p>
+    <h1>One QR. A pool of vouchers.</h1>
+    <p class="muted">Load voucher codes, print one QR, and let each hotspot device claim one code automatically.</p>
+    <% if (error) { %><div class="alert danger"><%= error %></div><% } %>
+    <form method="post" action="/login" class="stack">
+      <label>Email<input type="email" name="email" autocomplete="username" required></label>
+      <label>Password<input type="password" name="password" autocomplete="current-password" required></label>
+      <button class="btn primary" type="submit">Sign in</button>
+    </form>
+  </section>
+</main>
+</body></html>

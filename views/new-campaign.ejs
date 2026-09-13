@@ -1,0 +1,18 @@
+<%- include('partials/head', { title: 'New hotspot' }) %>
+<%- include('partials/nav') %>
+<main class="page narrow">
+  <a class="back" href="/dashboard">← Dashboard</a>
+  <div class="page-head"><div><p class="eyebrow">NEW CAMPAIGN</p><h1>Create a hotspot QR</h1><p class="muted">The QR will stay permanent even when you reload vouchers later.</p></div></div>
+  <section class="panel form-panel">
+    <% if (error) { %><div class="alert danger"><%= error %></div><% } %>
+    <form method="post" action="/campaigns" class="stack">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <label>Hotspot name<input name="name" placeholder="Nexa Hotspot" required></label>
+      <label>Local MikroTik hostname<input name="hotspot_host" placeholder="nexa.spot" required><small>Do not include http://</small></label>
+      <label>Landing path<input name="landing_path" value="/login" required><small>Usually /login on MikroTik Hotspot.</small></label>
+      <label>Description<textarea name="description" rows="3" placeholder="Main shop hotspot, reception QR, etc."></textarea></label>
+      <button class="btn primary" type="submit">Create hotspot</button>
+    </form>
+  </section>
+</main>
+</body></html>

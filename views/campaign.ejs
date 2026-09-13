@@ -1,0 +1,40 @@
+<%- include('partials/head', { title: campaign.name }) %>
+<%- include('partials/nav') %>
+<main class="page">
+  <a class="back" href="/dashboard">← Dashboard</a>
+  <div class="page-head"><div><div class="row gap"><span class="status <%= campaign.status %>"><%= campaign.status %></span><span class="tiny"><%= campaign.hotspot_host %></span></div><h1><%= campaign.name %></h1><p class="muted"><%= campaign.description || 'Permanent QR voucher pool' %></p></div><div class="actions"><a class="btn" href="/campaigns/<%= campaign.id %>/print" target="_blank">Print QR</a><form method="post" action="/campaigns/<%= campaign.id %>/status" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="status" value="<%= campaign.status === 'active' ? 'paused' : 'active' %>"><button class="btn"><%= campaign.status === 'active' ? 'Pause' : 'Activate' %></button></form></div></div>
+  <% if (notice) { %><div class="alert success"><%= notice %></div><% } %>
+  <% if (error) { %><div class="alert danger"><%= error %></div><% } %>
+  <section class="stats-grid">
+    <div class="stat"><span>Total</span><strong><%= number(stats.total) %></strong></div>
+    <div class="stat"><span>Available</span><strong><%= number(stats.available) %></strong></div>
+    <div class="stat"><span>Assigned</span><strong><%= number(stats.assigned) %></strong></div>
+    <div class="stat"><span>Used confirmed</span><strong><%= number(stats.used) %></strong></div>
+  </section>
+  <div class="two-col">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Reload vouchers</h2><p class="muted">Paste codes or upload a TXT/CSV file. Existing codes are skipped.</p></div></div>
+      <form method="post" action="/campaigns/<%= campaign.id %>/import" enctype="multipart/form-data" class="stack">
+        <input type="hidden" name="_csrf" value="<%= csrf %>">
+        <label>Batch label<input name="label" placeholder="September reload"></label>
+        <label>Paste vouchers<textarea name="vouchers" rows="8" placeholder="ABC123\nDEF456\nGHI789"></textarea></label>
+        <label class="upload">Or upload TXT / CSV<input type="file" name="voucher_file" accept=".txt,.csv,text/plain,text/csv"></label>
+        <button class="btn primary" type="submit">Add vouchers</button>
+      </form>
+    </section>
+    <section class="panel qr-panel">
+      <div class="panel-head"><div><h2>Permanent QR</h2><p class="muted">This QR does not change when you reload the pool.</p></div></div>
+      <img class="qr" src="/campaigns/<%= campaign.id %>/qr.png" alt="QR code">
+      <code class="url"><%= baseUrl %>/q/<%= campaign.public_token %></code>
+      <a class="btn primary" href="/campaigns/<%= campaign.id %>/print" target="_blank">Open printable poster</a>
+    </section>
+  </div>
+  <section class="panel">
+    <div class="panel-head"><div><h2>Voucher inventory</h2><p class="muted">Latest 100 codes. Codes are never embedded inside the QR.</p></div></div>
+    <div class="table-wrap"><table><thead><tr><th>Voucher</th><th>Status</th><th>Assigned device</th><th>Assigned</th></tr></thead><tbody>
+      <% vouchers.forEach(v => { %><tr><td class="mono"><%= v.code %></td><td><span class="status <%= v.status %>"><%= v.status %></span></td><td class="mono tiny"><%= v.assigned_device || '—' %></td><td class="tiny"><%= formatDate(v.assigned_at) %></td></tr><% }) %>
+      <% if (!vouchers.length) { %><tr><td colspan="4" class="muted">No vouchers loaded yet.</td></tr><% } %>
+    </tbody></table></div>
+  </section>
+</main>
+</body></html>

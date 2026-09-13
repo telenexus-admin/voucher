@@ -1,0 +1,8 @@
+<header class="topbar">
+  <a class="brand" href="/dashboard"><span class="brand-mark">V</span><span>Voucher QR</span></a>
+  <nav>
+    <a href="/dashboard">Dashboard</a>
+    <% if (currentUser && currentUser.role === 'admin') { %><a href="/users">Users</a><% } %>
+    <form method="post" action="/logout" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="link-button">Sign out</button></form>
+  </nav>
+</header>
