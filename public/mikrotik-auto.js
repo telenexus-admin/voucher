@@ -58,8 +58,17 @@
     var code = document.querySelector('#code');
     var button = document.querySelector('#voucher-form');
     var deviceKey = findDeviceKey();
-    if (code && button && deviceKey) return callback(code, button, deviceKey);
-    if (attempts >= 40) return showOverlay('The hotspot login page did not become ready. Please open the normal login page and try again.', true);
+    var jqueryReady = !!window.jQuery;
+    var voucherEndpointReady = typeof window.lnmolink2 === 'string' && window.lnmolink2.length > 0;
+
+    if (code && button && deviceKey && jqueryReady && voucherEndpointReady) {
+      return callback(code, button, deviceKey);
+    }
+
+    if (attempts >= 80) {
+      return showOverlay('The hotspot login page did not finish loading its voucher service. Please refresh and try again.', true);
+    }
+
     setTimeout(function () { waitForHotspotReady(callback, attempts + 1); }, 250);
   }
 
@@ -80,14 +89,21 @@
         codeInput.value = result.voucher;
         var overlay = document.getElementById('vq-auto-overlay');
         if (overlay) overlay.remove();
-        setTimeout(function () { activateButton.click(); }, 900);
+        setTimeout(function () { activateButton.click(); }, 500);
       })
       .catch(function (error) {
         showOverlay(error.message || 'Unable to assign a voucher. Please try again.', true);
       });
   }
 
-  window.addEventListener('DOMContentLoaded', function () {
+  function start() {
+    showOverlay('Preparing automatic hotspot access.', false);
     waitForHotspotReady(claimAndActivate, 0);
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', start, { once: true });
+  } else {
+    start();
+  }
 })();
