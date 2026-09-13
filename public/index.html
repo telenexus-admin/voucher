@@ -8,46 +8,159 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
   <main class="shell">
     <section id="loginView" class="auth-wrap">
       <div class="brand-mark">VQ</div>
       <div class="auth-card panel">
-        <div class="eyebrow">Telenexus Voucher Portal</div><h1>One QR. Many vouchers.</h1>
+        <div class="eyebrow">Telenexus Voucher Portal</div>
+        <h1>One QR. Many vouchers.</h1>
         <p class="muted">Load hotspot vouchers, generate a reusable QR, and assign one voucher per device automatically.</p>
-        <form id="loginForm" class="stack-lg"><label>Email<input id="loginEmail" type="email" autocomplete="username" required /></label><label>Password<input id="loginPassword" type="password" autocomplete="current-password" required /></label><button class="btn primary" type="submit">Sign in</button><p id="loginError" class="error-text"></p></form>
+        <form id="loginForm" class="stack-lg">
+          <label>Email<input id="loginEmail" type="email" autocomplete="username" required /></label>
+          <label>Password<input id="loginPassword" type="password" autocomplete="current-password" required /></label>
+          <button class="btn primary" type="submit">Sign in</button>
+          <p id="loginError" class="error-text"></p>
+        </form>
       </div>
     </section>
 
     <section id="appView" class="app hidden">
       <aside class="sidebar panel">
-        <div><div class="brand-row"><div class="brand-mark small">VQ</div><div><strong>Voucher QR</strong><span>Hotspot distribution</span></div></div>
-          <nav><button class="nav-item active" data-screen="dashboard">Overview</button><button class="nav-item" data-screen="campaigns">QR Campaigns</button><button id="usersNav" class="nav-item hidden" data-screen="users">Portal Users</button></nav>
+        <div>
+          <div class="brand-row">
+            <div class="brand-mark small">VQ</div>
+            <div>
+              <strong>Voucher QR</strong>
+              <span>Hotspot distribution</span>
+            </div>
+          </div>
+          <nav>
+            <button class="nav-item active" data-screen="dashboard">Overview</button>
+            <button class="nav-item" data-screen="campaigns">QR Campaigns</button>
+            <button id="usersNav" class="nav-item hidden" data-screen="users">Portal Users</button>
+          </nav>
         </div>
-        <div class="sidebar-foot"><div id="adminName" class="small-text"></div><div id="adminEmail" class="muted small-text"></div><button id="logoutBtn" class="btn ghost">Sign out</button></div>
+        <div class="sidebar-foot">
+          <div id="adminName" class="small-text"></div>
+          <div id="adminEmail" class="muted small-text"></div>
+          <button id="logoutBtn" class="btn ghost">Sign out</button>
+        </div>
       </aside>
 
       <section class="workspace">
-        <header class="topbar"><div><div class="eyebrow">CONTROL CENTER</div><h2 id="pageTitle">Overview</h2></div><button id="newCampaignBtn" class="btn primary">+ New QR Campaign</button></header>
+        <header class="topbar">
+          <div>
+            <div class="eyebrow">CONTROL CENTER</div>
+            <h2 id="pageTitle">Overview</h2>
+          </div>
+          <button id="newCampaignBtn" class="btn primary">+ New QR Campaign</button>
+        </header>
 
         <section id="dashboardScreen" class="screen">
-          <div class="stats-grid"><article class="stat-card panel"><span>Campaigns</span><strong id="statCampaigns">0</strong><small>Configured QR pools</small></article><article class="stat-card panel"><span>Total vouchers</span><strong id="statTotal">0</strong><small>Across your pools</small></article><article class="stat-card panel"><span>Available</span><strong id="statAvailable">0</strong><small>Ready to assign</small></article><article class="stat-card panel"><span>Assigned</span><strong id="statAssigned">0</strong><small>Claimed by devices</small></article></div>
-          <div class="panel content-card"><div class="section-head"><div><div class="eyebrow">LATEST</div><h3>QR campaigns</h3></div><button id="refreshBtn" class="btn ghost">Refresh</button></div><div id="campaignCards" class="campaign-grid"></div><div id="emptyCampaigns" class="empty-state hidden"><strong>No campaigns yet</strong><span>Create your first QR pool and load vouchers into it.</span></div></div>
+          <div class="stats-grid">
+            <article class="stat-card panel"><span>Campaigns</span><strong id="statCampaigns">0</strong><small>Configured QR pools</small></article>
+            <article class="stat-card panel"><span>Total vouchers</span><strong id="statTotal">0</strong><small>Across your pools</small></article>
+            <article class="stat-card panel"><span>Available</span><strong id="statAvailable">0</strong><small>Ready to assign</small></article>
+            <article class="stat-card panel"><span>Assigned</span><strong id="statAssigned">0</strong><small>Claimed by devices</small></article>
+          </div>
+          <div class="panel content-card">
+            <div class="section-head">
+              <div><div class="eyebrow">LATEST</div><h3>QR campaigns</h3></div>
+              <button id="refreshBtn" class="btn ghost">Refresh</button>
+            </div>
+            <div id="campaignCards" class="campaign-grid"></div>
+            <div id="emptyCampaigns" class="empty-state hidden">
+              <strong>No campaigns yet</strong>
+              <span>Create your first QR pool and load vouchers into it.</span>
+            </div>
+          </div>
         </section>
 
-        <section id="campaignsScreen" class="screen hidden"><div class="campaign-layout"><div class="panel content-card campaign-list-card"><div class="section-head"><div><div class="eyebrow">POOLS</div><h3>Your campaigns</h3></div></div><div id="campaignList" class="campaign-list"></div></div><div id="campaignDetail" class="panel content-card detail-card"><div class="empty-state"><strong>Select a campaign</strong><span>Its QR, voucher balance and upload tools will appear here.</span></div></div></div></section>
+        <section id="campaignsScreen" class="screen hidden">
+          <div class="campaign-layout">
+            <div class="panel content-card campaign-list-card">
+              <div class="section-head"><div><div class="eyebrow">POOLS</div><h3>Your campaigns</h3></div></div>
+              <div id="campaignList" class="campaign-list"></div>
+            </div>
+            <div id="campaignDetail" class="panel content-card detail-card">
+              <div class="empty-state"><strong>Select a campaign</strong><span>Its QR, voucher balance and upload tools will appear here.</span></div>
+            </div>
+          </div>
+        </section>
 
         <section id="usersScreen" class="screen hidden">
           <div class="campaign-layout">
-            <div class="panel content-card campaign-list-card"><div class="eyebrow">ACCESS</div><h3>Add portal user</h3><p class="muted small-text">Operators only see campaigns they create. Administrators can see every campaign and manage users.</p><form id="userForm" class="stack-lg"><label>Name<input id="userName" required /></label><label>Email<input id="userEmail" type="email" required /></label><label>Temporary password<input id="userPassword" type="password" minlength="10" required /></label><label>Role<select id="userRole"><option value="operator">Operator</option><option value="admin">Administrator</option></select></label><button class="btn primary" type="submit">Create user</button><p id="userError" class="error-text"></p></form></div>
-            <div class="panel content-card detail-card"><div class="section-head"><div><div class="eyebrow">ACCOUNTS</div><h3>Portal users</h3></div></div><div class="voucher-table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Created</th></tr></thead><tbody id="usersTable"></tbody></table></div></div>
+            <div class="panel content-card campaign-list-card">
+              <div class="eyebrow">ACCESS</div>
+              <h3>Add portal user</h3>
+              <p class="muted small-text">Operators only see campaigns they create. Administrators can see every campaign and manage users.</p>
+              <form id="userForm" class="stack-lg">
+                <label>Name<input id="userName" required /></label>
+                <label>Email<input id="userEmail" type="email" required /></label>
+                <label>Temporary password<input id="userPassword" type="password" minlength="10" required /></label>
+                <label>Role
+                  <select id="userRole">
+                    <option value="operator">Operator</option>
+                    <option value="admin">Administrator</option>
+                  </select>
+                </label>
+                <button class="btn primary" type="submit">Create user</button>
+                <p id="userError" class="error-text"></p>
+              </form>
+            </div>
+            <div class="panel content-card detail-card">
+              <div class="section-head"><div><div class="eyebrow">ACCOUNTS</div><h3>Portal users</h3></div></div>
+              <div class="voucher-table-wrap">
+                <table>
+                  <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Created</th></tr></thead>
+                  <tbody id="usersTable"></tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </section>
       </section>
     </section>
   </main>
 
-  <dialog id="campaignDialog" class="modal"><form id="campaignForm" method="dialog" class="modal-card panel"><div class="section-head"><div><div class="eyebrow">NEW</div><h3>Create QR campaign</h3></div><button type="button" class="icon-btn" data-close-dialog>×</button></div><label>Campaign name<input id="campaignName" placeholder="Nexa Main Hotspot" required /></label><label>Hotspot login URL<input id="hotspotUrl" placeholder="http://nexa.spot/login" required /></label><p class="hint">The QR first opens this portal, then redirects the phone back to this hotspot login URL with the campaign token.</p><div class="modal-actions"><button type="button" class="btn ghost" data-close-dialog>Cancel</button><button type="submit" class="btn primary">Create campaign</button></div><p id="campaignError" class="error-text"></p></form></dialog>
-  <dialog id="voucherDialog" class="modal"><form id="voucherForm" method="dialog" class="modal-card panel wide"><div class="section-head"><div><div class="eyebrow">RELOAD</div><h3>Add vouchers</h3></div><button type="button" class="icon-btn" data-close-voucher>×</button></div><label>Paste voucher codes<textarea id="voucherText" rows="11" placeholder="ABC123\nABC124\nABC125"></textarea></label><div class="upload-drop"><input id="voucherFile" type="file" accept=".txt,.csv,text/plain,text/csv" /><span>Or choose a TXT/CSV file</span></div><p class="hint">One voucher per line is best. CSV files are also accepted; the first non-empty value on each row is used.</p><div class="modal-actions"><button type="button" class="btn ghost" data-close-voucher>Cancel</button><button type="submit" class="btn primary">Upload vouchers</button></div><p id="voucherError" class="error-text"></p></form></dialog>
-  <div id="toast" class="toast hidden"></div><script src="/app.js" defer></script>
-</body></html>
+  <dialog id="campaignDialog" class="modal">
+    <form id="campaignForm" method="dialog" class="modal-card panel">
+      <div class="section-head">
+        <div><div class="eyebrow">NEW</div><h3>Create QR campaign</h3></div>
+        <button type="button" class="icon-btn" data-close-dialog>×</button>
+      </div>
+      <label>Campaign name<input id="campaignName" placeholder="Nexa Main Hotspot" required /></label>
+      <label>Hotspot login URL<input id="hotspotUrl" placeholder="http://nexa.spot/login" required /></label>
+      <p class="hint">The QR first opens this portal, then redirects the phone back to this hotspot login URL with the campaign token.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" data-close-dialog>Cancel</button>
+        <button type="submit" class="btn primary">Create campaign</button>
+      </div>
+      <p id="campaignError" class="error-text"></p>
+    </form>
+  </dialog>
+
+  <dialog id="voucherDialog" class="modal">
+    <form id="voucherForm" method="dialog" class="modal-card panel wide">
+      <div class="section-head">
+        <div><div class="eyebrow">RELOAD</div><h3>Add vouchers</h3></div>
+        <button type="button" class="icon-btn" data-close-voucher>×</button>
+      </div>
+      <label>Paste voucher codes<textarea id="voucherText" rows="11" placeholder="ABC123\nABC124\nABC125"></textarea></label>
+      <div class="upload-drop"><input id="voucherFile" type="file" accept=".txt,.csv,text/plain,text/csv" /><span>Or choose a TXT/CSV file</span></div>
+      <p class="hint">One voucher per line is best. CSV files are also accepted; the first non-empty value on each row is used.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn ghost" data-close-voucher>Cancel</button>
+        <button type="submit" class="btn primary">Upload vouchers</button>
+      </div>
+      <p id="voucherError" class="error-text"></p>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
