@@ -1,0 +1,18 @@
+[Unit]
+Description=Telenexus Voucher QR Portal
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/voucher
+EnvironmentFile=/opt/voucher/.env
+ExecStart=/usr/bin/node /opt/voucher/server.js
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
